@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory – John & Julie</title>
+
+<!--
+  ===========================================================
+  Diese Seite nutzt automatisch echte Fotos aus derselben
+  Google-Drive-Galerie wie galerie.html (siehe galerie-anleitung.md).
+  Trage unten dieselbe APPS_SCRIPT_URL ein wie in galerie.html.
+  Sobald mindestens 8 Fotos hochgeladen sind, spielt ihr Memory
+  mit echten Erinnerungen statt Platzhalter-Emojis.
+  ===========================================================
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --pink: #f3c9d4;
+    --pink-deep: #e8a3b8;
+    --beige: #f6efe6;
+    --white: #fffaf7;
+    --text: #5a4a4a;
+    --text-dark: #3d2f2f;
+    --shadow: rgba(180, 120, 140, 0.25);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Poppins', sans-serif; color:var(--text); background:var(--beige); }
+  h1,h2,h3{ font-family:'Playfair Display', serif; color:var(--text-dark); }
+
+  .site-nav{
+    position:fixed; top:0; left:0; right:0; z-index:500;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 6vw;
+    background:rgba(255,250,247,0.9);
+    -webkit-backdrop-filter:blur(6px);
+    backdrop-filter:blur(6px);
+    box-shadow:0 4px 20px rgba(180,120,140,0.12);
+  }
+  .site-nav .nav-brand{ font-family:'Playfair Display', serif; font-weight:600; color:var(--text-dark); font-size:1.05rem; }
+  .site-nav .nav-links{ display:flex; gap:22px; flex-wrap:wrap; }
+  .site-nav .nav-links a{ font-size:0.85rem; color:var(--text); font-weight:500; padding:6px 12px; border-radius:20px; transition:background .2s ease, color .2s ease; }
+  .site-nav .nav-links a:hover, .site-nav .nav-links a.active{ background:var(--pink); color:var(--text-dark); }
+  @media (max-width:640px){
+    .site-nav{ flex-direction:column; gap:8px; padding:10px 4vw; }
+    .site-nav .nav-links{ gap:8px; justify-content:center; }
+    .site-nav .nav-links a{ font-size:0.72rem; padding:5px 9px; }
+  }
+
+  main{ max-width:760px; margin:0 auto; padding:130px 6vw 90px 6vw; text-align:center; }
+  .page-title{ font-size:clamp(1.8rem, 4vw, 2.6rem); margin-bottom:10px; }
+  .page-sub{ max-width:520px; margin:0 auto 24px auto; opacity:0.85; }
+
+  #stats{
+    display:flex;
+    justify-content:center;
+    gap:30px;
+    margin-bottom:28px;
+    font-size:0.9rem;
+  }
+  #stats span{ font-weight:600; color:var(--text-dark); }
+
+  .memory-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:12px;
+    max-width:520px;
+    margin:0 auto;
+  }
+  @media (max-width:520px){
+    .memory-grid{ grid-template-columns:repeat(4, 1fr); gap:8px; }
+  }
+
+  .card{
+    aspect-ratio:1/1;
+    perspective:800px;
+    cursor:pointer;
+  }
+  .card-inner{
+    position:relative;
+    width:100%; height:100%;
+    transition:transform .5s cubic-bezier(.4,.2,.2,1);
+    transform-style:preserve-3d;
+  }
+  .card.flipped .card-inner{ transform:rotateY(180deg); }
+
+  .card-face{
+    position:absolute; inset:0;
+    backface-visibility:hidden;
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.8rem;
+    box-shadow:0 6px 16px var(--shadow);
+  }
+  .card-back{
+    background:linear-gradient(135deg, var(--pink), var(--pink-deep));
+    color:#fff;
+    font-size:1.4rem;
+  }
+  .card-front{
+    background:var(--white);
+    transform:rotateY(180deg);
+    flex-direction:column;
+    gap:4px;
+    padding:4px;
+    overflow:hidden;
+  }
+  .card-front .label{ font-size:0.55rem; color:var(--text); text-align:center; line-height:1.2; }
+  .card-front img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border-radius:12px;
+  }
+  .card-front img + .label{
+    position:absolute;
+    bottom:0; left:0; right:0;
+    background:linear-gradient(0deg, rgba(61,47,47,0.7), transparent);
+    color:#fff;
+    padding:4px 2px 3px 2px;
+  }
+
+  #loadingHint{
+    text-align:center;
+    opacity:0.6;
+    font-size:0.85rem;
+    margin-bottom:16px;
+  }
+
+  .card.matched .card-face{ opacity:0.45; }
+
+  #winMsg{
+    display:none;
+    margin-top:28px;
+    background:var(--white);
+    border-radius:16px;
+    padding:22px;
+    box-shadow:0 12px 26px var(--shadow);
+    font-size:1rem;
+  }
+  #winMsg.show{ display:block; }
+
+  #restartBtn{
+    margin-top:20px;
+    background:var(--pink-deep);
+    color:#fff;
+    border:none;
+    border-radius:30px;
+    padding:12px 26px;
+    font-family:'Poppins', sans-serif;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html" class="nav-brand">John &amp; Julie</a>
+  <div class="nav-links">
+    <a href="index.html">Start</a>
+    <a href="bucketliste.html">Bucketlist</a>
+    <a href="galerie.html">Galerie</a>
+    <a href="memory.html" class="active">Memory</a>  </div>
+</nav>
+
+<main>
+  <h1 class="page-title">Unser Memory ❤️</h1>
+  <p class="page-sub">Findet die Paare aus unseren schönsten Momenten.</p>
+  <p id="loadingHint"></p>
+
+  <div id="stats">
+    <div>Züge: <span id="moves">0</span></div>
+    <div>Gefunden: <span id="found">0</span>/<span id="totalPairs">8</span></div>
+  </div>
+
+  <div class="memory-grid" id="grid"></div>
+
+  <div id="winMsg">🎉 Geschafft! Ihr habt alle Paare in <span id="finalMoves"></span> Zügen gefunden. ❤️</div>
+  <button id="restartBtn">Nochmal spielen</button>
+</main>
+
+<script>
+/* =========================================================
+   KONFIGURATION – dieselbe URL wie in galerie.html eintragen
+   ========================================================= */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5SIb7skZmGTfBLf7DWJuuWI4jBB68_RkYGmG7pmKzfZve1cDEUY4SBh4501ifFqcBqQ/exec";
+
+const FALLBACK_CARD_DATA = [
+  { key: 'extrablatt', emoji: '📍', label: 'Extrablatt' },
+  { key: 'kino', emoji: '❤️', label: 'Kino' },
+  { key: 'zadar', emoji: '🌅', label: 'Zadar' },
+  { key: 'muenchen', emoji: '💑', label: 'München' },
+  { key: 'marbella', emoji: '🏖️', label: 'Marbella' },
+  { key: 'parasailing', emoji: '🪂', label: 'Parasailing' },
+  { key: 'ballon', emoji: '🎈', label: 'Ballonflug' },
+  { key: 'geburtstag', emoji: '🎂', label: 'Geburtstag' }
+];
+
+const grid = document.getElementById('grid');
+const movesEl = document.getElementById('moves');
+const foundEl = document.getElementById('found');
+const winMsg = document.getElementById('winMsg');
+const finalMoves = document.getElementById('finalMoves');
+const totalPairsEl = document.getElementById('totalPairs');
+const restartBtn = document.getElementById('restartBtn');
+const loadingHint = document.getElementById('loadingHint');
+
+let flipped = [];
+let matchedCount = 0;
+let moves = 0;
+let lock = false;
+let activeCardData = FALLBACK_CARD_DATA;
+
+function isConfigured(){
+  return APPS_SCRIPT_URL && APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === -1;
+}
+
+function shuffle(arr){
+  const a = [...arr];
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function getActiveCardData(){
+  if(!isConfigured()) return FALLBACK_CARD_DATA;
+  try{
+    const res = await fetch(APPS_SCRIPT_URL);
+    const items = await res.json();
+    if(!items || items.length === 0) return FALLBACK_CARD_DATA;
+    const count = Math.min(items.length, 8);
+    const chosen = shuffle(items).slice(0, count);
+    return chosen.map(item => ({
+      key: item.id,
+      img: `https://drive.google.com/thumbnail?id=${item.id}&sz=w400`,
+      label: ''
+    }));
+  }catch(err){
+    return FALLBACK_CARD_DATA;
+  }
+}
+
+async function buildBoard(){
+  loadingHint.textContent = 'Karten werden gemischt…';
+  grid.innerHTML = '';
+  flipped = [];
+  matchedCount = 0;
+  moves = 0;
+  lock = false;
+  movesEl.textContent = '0';
+  foundEl.textContent = '0';
+  winMsg.classList.remove('show');
+
+  activeCardData = await getActiveCardData();
+  totalPairsEl.textContent = activeCardData.length;
+  loadingHint.textContent = activeCardData === FALLBACK_CARD_DATA
+    ? (isConfigured() ? '' : 'Tipp: Lade Fotos in der Galerie hoch, dann spielt ihr mit echten Erinnerungen.')
+    : '';
+
+  const pairs = shuffle([...activeCardData, ...activeCardData]);
+
+  pairs.forEach((data) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.key = data.key;
+    const frontContent = data.img
+      ? `<img src="${data.img}" alt="">`
+      : `<div>${data.emoji}</div><div class="label">${data.label}</div>`;
+    card.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face card-back">❤</div>
+        <div class="card-face card-front">
+          ${frontContent}
+        </div>
+      </div>
+    `;
+    card.addEventListener('click', () => onCardClick(card));
+    grid.appendChild(card);
+  });
+}
+
+function onCardClick(card){
+  if(lock) return;
+  if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+  card.classList.add('flipped');
+  flipped.push(card);
+
+  if(flipped.length === 2){
+    moves++;
+    movesEl.textContent = moves;
+    lock = true;
+    const [a, b] = flipped;
+    if(a.dataset.key === b.dataset.key){
+      a.classList.add('matched');
+      b.classList.add('matched');
+      matchedCount++;
+      foundEl.textContent = matchedCount;
+      flipped = [];
+      lock = false;
+      if(matchedCount === activeCardData.length){
+        setTimeout(() => {
+          finalMoves.textContent = moves;
+          winMsg.classList.add('show');
+        }, 400);
+      }
+    }else{
+      setTimeout(() => {
+        a.classList.remove('flipped');
+        b.classList.remove('flipped');
+        flipped = [];
+        lock = false;
+      }, 900);
+    }
+  }
+}
+
+restartBtn.addEventListener('click', buildBoard);
+
+buildBoard();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unsere Bucketliste – John & Julie</title>
+
+<!--
+  ===========================================================
+  SETUP: Diese Seite nutzt ein Google Sheet + Apps Script für
+  die Bucketliste (die Zeitleiste auf index.html ist rein
+  statisch und NICHT mehr an das Sheet angebunden).
+  Ausführliche Schritt-für-Schritt-Anleitung: momente-anleitung.md
+  Code zum Einfügen in Apps Script: apps-script-sheet-code.txt
+
+  Kurzfassung:
+  1. Tab "Bucketlist" im Sheet, Kopfzeile: Orte | Aktivitäten | Zukunft
+     (drei unabhängige Spalten-Listen, ein Punkt pro Zeile)
+  2. Erweiterungen -> Apps Script -> Code aus
+     apps-script-sheet-code.txt einfügen
+  3. Bereitstellen -> Neuer Bereitstellungsvorgang -> Web-App
+     (Ausführen als: Ich / Zugriff: Alle)
+  4. Die entstehende URL (endet auf /exec) unten bei APPS_SCRIPT_URL
+     eintragen.
+  ===========================================================
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --pink: #f3c9d4;
+    --pink-deep: #e8a3b8;
+    --beige: #f6efe6;
+    --white: #fffaf7;
+    --text: #5a4a4a;
+    --text-dark: #3d2f2f;
+    --shadow: rgba(180, 120, 140, 0.25);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    font-family:'Poppins', sans-serif;
+    color:var(--text);
+    background:var(--beige);
+    min-height:100vh;
+  }
+  h1,h2,h3{ font-family:'Playfair Display', serif; color:var(--text-dark); }
+
+  /* ---------- Navigation (identisch zur Startseite) ---------- */
+  .site-nav{
+    position:fixed; top:0; left:0; right:0; z-index:500;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 6vw;
+    background:rgba(255,250,247,0.9);
+    -webkit-backdrop-filter:blur(6px);
+    backdrop-filter:blur(6px);
+    box-shadow:0 4px 20px rgba(180,120,140,0.12);
+  }
+  .site-nav .nav-brand{ font-family:'Playfair Display', serif; font-weight:600; color:var(--text-dark); font-size:1.05rem; }
+  .site-nav .nav-links{ display:flex; gap:22px; flex-wrap:wrap; }
+  .site-nav .nav-links a{ font-size:0.85rem; color:var(--text); font-weight:500; padding:6px 12px; border-radius:20px; transition:background .2s ease, color .2s ease; }
+  .site-nav .nav-links a:hover, .site-nav .nav-links a.active{ background:var(--pink); color:var(--text-dark); }
+  @media (max-width:640px){
+    .site-nav{ flex-direction:column; gap:8px; padding:10px 4vw; }
+    .site-nav .nav-links{ gap:8px; justify-content:center; }
+    .site-nav .nav-links a{ font-size:0.72rem; padding:5px 9px; }
+  }
+
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:130px 6vw 90px 6vw;
+  }
+  .page-title{ text-align:center; font-size:clamp(1.8rem, 4vw, 2.6rem); margin-bottom:10px; }
+  .page-sub{ text-align:center; max-width:520px; margin:0 auto 40px auto; opacity:0.85; }
+
+  .categories-row{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:30px;
+    align-items:start;
+  }
+  @media (max-width:800px){
+    .categories-row{ grid-template-columns:1fr; }
+  }
+
+  #status-msg{
+    text-align:center;
+    padding:16px;
+    border-radius:12px;
+    background:var(--white);
+    margin-bottom:24px;
+    font-size:0.9rem;
+    display:none;
+  }
+  #status-msg.show{ display:block; }
+  #status-msg.error{ color:#a33; background:#fbe9e9; }
+
+  .category{
+    margin-bottom:44px;
+  }
+  .category h2{
+    font-size:1.3rem;
+    margin-bottom:14px;
+  }
+
+  .list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--white);
+    border-radius:14px;
+    padding:16px 18px;
+    box-shadow:0 8px 20px var(--shadow);
+  }
+  .item input[type="checkbox"]{
+    width:22px; height:22px;
+    accent-color:var(--pink-deep);
+    flex-shrink:0;
+    cursor:pointer;
+  }
+  .item span.text{
+    flex:1;
+    font-size:0.98rem;
+    transition:opacity .2s ease;
+    cursor:text;
+    border-radius:6px;
+    padding:2px 4px;
+    margin:-2px -4px;
+  }
+  .item span.text:hover{
+    background:var(--beige);
+  }
+  .item.done span.text{
+    text-decoration:line-through;
+    opacity:0.5;
+  }
+  .item input.edit-text{
+    flex:1;
+    font-family:'Poppins', sans-serif;
+    font-size:0.98rem;
+    border:1px solid var(--pink-deep);
+    border-radius:6px;
+    padding:4px 6px;
+    outline:none;
+  }
+  .item button.del{
+    border:none;
+    background:transparent;
+    color:var(--pink-deep);
+    font-size:1.1rem;
+    cursor:pointer;
+    opacity:0.6;
+    transition:opacity .2s ease;
+  }
+  .item button.del:hover{ opacity:1; }
+
+  .item .drag-handle{
+    cursor:grab;
+    color:var(--pink-deep);
+    opacity:0.5;
+    font-size:1.2rem;
+    flex-shrink:0;
+    line-height:1;
+    letter-spacing:-1px;
+    user-select:none;
+    touch-action:none;
+    padding:4px 2px;
+  }
+  .item .drag-handle:active{ cursor:grabbing; }
+  .item.dragging{
+    opacity:0.5;
+    box-shadow:0 14px 30px var(--shadow);
+  }
+
+  .add-form{
+    display:flex;
+    gap:10px;
+    background:var(--white);
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:16px;
+    box-shadow:0 8px 20px var(--shadow);
+  }
+  .add-form input[type="text"]{
+    flex:1;
+    border:1px solid var(--pink);
+    border-radius:10px;
+    padding:12px 14px;
+    font-family:'Poppins', sans-serif;
+    font-size:0.95rem;
+    outline:none;
+  }
+  .add-form input[type="text"]:focus{ border-color:var(--pink-deep); }
+  .add-form button{
+    background:var(--pink-deep);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:0 22px;
+    font-family:'Poppins', sans-serif;
+    font-size:0.95rem;
+    cursor:pointer;
+    transition:transform .2s ease;
+  }
+  .add-form button:hover{ transform:translateY(-2px); }
+
+  .empty-hint{
+    text-align:center;
+    opacity:0.6;
+    font-size:0.9rem;
+    padding:14px;
+  }
+
+  /* ---------- Weltkarte ---------- */
+  .weltkarte-section{
+    margin-top:56px;
+  }
+  .weltkarte-section h2{
+    text-align:center;
+    font-size:1.5rem;
+    margin-bottom:20px;
+  }
+  .map-wrap{
+    position:relative;
+    width:100%;
+    max-width:880px;
+    margin:0 auto;
+    border-radius:18px;
+    background:var(--white);
+    box-shadow:0 8px 20px var(--shadow);
+    padding:14px;
+  }
+  .map-viewport{
+    position:relative;
+    width:100%;
+    overflow:hidden;
+    border-radius:10px;
+    cursor:grab;
+    touch-action:none;
+  }
+  .map-viewport.dragging{ cursor:grabbing; }
+  .map-zoom-layer{
+    position:relative;
+    width:100%;
+    transform-origin:0 0;
+    will-change:transform;
+  }
+  .map-zoom-layer .map-img{
+    width:100%;
+    display:block;
+    -webkit-user-drag:none;
+    user-select:none;
+    pointer-events:none;
+  }
+  .map-pins{
+    position:absolute;
+    inset:0;
+  }
+  .map-controls{
+    position:absolute;
+    right:22px; bottom:22px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    z-index:20;
+  }
+  .map-controls button{
+    width:32px; height:32px;
+    border-radius:50%;
+    border:none;
+    background:var(--pink-deep);
+    color:#fff;
+    font-size:1.15rem;
+    font-family:'Poppins', sans-serif;
+    line-height:1;
+    cursor:pointer;
+    box-shadow:0 4px 10px var(--shadow);
+  }
+  .map-controls button:hover{ filter:brightness(1.05); }
+  .map-pin{
+    position:absolute;
+    width:13px; height:13px;
+    border-radius:50%;
+    border:2px solid #fff;
+    box-shadow:0 2px 5px rgba(0,0,0,0.35);
+    transform:translate(-50%, -50%);
+  }
+  .map-pin.visited{ background:#d9534f; }
+  .map-pin.wishlist{ background:#4a90d9; }
+  .map-pin:hover{ z-index:10; }
+  .map-pin .pin-tooltip{
+    position:absolute;
+    bottom:130%; left:50%;
+    transform:translateX(-50%);
+    background:var(--text-dark);
+    color:#fff;
+    padding:3px 9px;
+    border-radius:6px;
+    font-size:0.72rem;
+    white-space:nowrap;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .15s ease;
+  }
+  .map-pin:hover .pin-tooltip{ opacity:1; }
+
+  .mini-heart{
+    position:fixed;
+    pointer-events:none;
+    z-index:999;
+    opacity:0.95;
+    transform:translate(0, 0) scale(0.9);
+    transition:transform 900ms ease-out, opacity 900ms ease-out;
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html" class="nav-brand">John &amp; Julie</a>
+  <div class="nav-links">
+    <a href="index.html">Start</a>
+    <a href="bucketliste.html" class="active">Bucketlist</a>
+    <a href="galerie.html">Galerie</a>
+    <a href="memory.html">Memory</a>
+  </div>
+</nav>
+
+<main>
+  <h1 class="page-title">Unsere Bucketliste 📝</h1>
+  <p class="page-sub">Unsere gemeinsame Bucketlist zum Ausfüllen</p>
+
+  <div id="status-msg"></div>
+
+  <div class="categories-row">
+    <div class="category" data-category="orte">
+      <h2>📍 Orte</h2>
+      <form class="add-form" data-category="orte">
+        <input type="text" placeholder="Neuer Ort…" required>
+        <button type="submit">Hinzufügen</button>
+      </form>
+      <div class="list" id="list-orte"></div>
+      <p class="empty-hint" id="emptyHint-orte" style="display:none;">Noch keine Orte auf der Liste.</p>
+    </div>
+
+    <div class="category" data-category="aktivitaeten">
+      <h2>🎯 Aktivitäten</h2>
+      <form class="add-form" data-category="aktivitaeten">
+        <input type="text" placeholder="Neue Aktivität…" required>
+        <button type="submit">Hinzufügen</button>
+      </form>
+      <div class="list" id="list-aktivitaeten"></div>
+      <p class="empty-hint" id="emptyHint-aktivitaeten" style="display:none;">Noch keine Aktivitäten auf der Liste.</p>
+    </div>
+
+    <div class="category" data-category="zukunft">
+      <h2>🌟 Zukunft</h2>
+      <form class="add-form" data-category="zukunft">
+        <input type="text" placeholder="Neuer Zukunftsplan…" required>
+        <button type="submit">Hinzufügen</button>
+      </form>
+      <div class="list" id="list-zukunft"></div>
+      <p class="empty-hint" id="emptyHint-zukunft" style="display:none;">Noch nichts für die Zukunft eingetragen.</p>
+    </div>
+  </div>
+
+  <div class="weltkarte-section">
+    <h2>🗺️ Unsere Weltkarte</h2>
+    <div class="map-wrap">
+      <div class="map-viewport" id="mapViewport">
+        <div class="map-zoom-layer" id="mapZoomLayer">
+          <img class="map-img" alt="Weltkarte" draggable="false" src="https://upload.wikimedia.org/wikipedia/commons/5/51/BlankMap-Equirectangular.svg">
+        </div>
+        <div class="map-pins" id="mapPins"></div>
+      </div>
+      <div class="map-controls">
+        <button type="button" id="mapZoomIn" title="Vergrößern">+</button>
+        <button type="button" id="mapZoomOut" title="Verkleinern">−</button>
+        <button type="button" id="mapZoomReset" title="Zurücksetzen">⟲</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* =========================================================
+   KONFIGURATION – HIER ANPASSEN
+   Trage hier die Web-App-URL aus Google Apps Script ein
+   (siehe momente-anleitung.md), sie endet auf "/exec"
+   ========================================================= */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdwpjzzZJ7-MBU8NdUuifH7K7YramDOS7Z8OPV1yqK38QlmBLoOndrgLeheRqkbysC/exec";
+
+const CATEGORIES = ['orte', 'aktivitaeten', 'zukunft'];
+const statusMsg = document.getElementById('status-msg');
+
+function showStatus(text, isError){
+  statusMsg.textContent = text;
+  statusMsg.className = 'show' + (isError ? ' error' : '');
+}
+
+function isConfigured(){
+  return APPS_SCRIPT_URL && APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === -1;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function loadItems(){
+  if(!isConfigured()){
+    showStatus('Die Bucketliste ist noch nicht verbunden. Trage im Skript oben die Apps-Script-URL ein (siehe momente-anleitung.md).', true);
+    return;
+  }
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?type=bucketlist');
+    const data = await res.json();
+    CATEGORIES.forEach(cat => renderCategory(cat, data[cat] || []));
+    statusMsg.className = '';
+    loadWeltkarte(data.orte || []);
+  }catch(err){
+    showStatus('Die Liste konnte nicht geladen werden. Prüfe die Apps-Script-URL und ob die Bereitstellung auf "Alle" freigegeben ist.', true);
+  }
+}
+
+/* =========================================================
+   WELTKARTE – rote Stecknadeln für abgehakte Orte (schon
+   gemeinsam besucht) und blaue Stecknadeln für offene Orte,
+   beides direkt aus der Bucketlist-Kategorie "orte".
+   ========================================================= */
+const GEO = {
+  'münchen':[48.1351,11.5820], 'muenchen':[48.1351,11.5820],
+  'zadar':[44.1194,15.2314],
+  'marbella':[36.5099,-4.8863],
+  'malaga':[36.7213,-4.4214], 'málaga':[36.7213,-4.4214],
+  'venedig':[45.4408,12.3155], 'venice':[45.4408,12.3155],
+  'rom':[41.9028,12.4964], 'rome':[41.9028,12.4964],
+  'tokio':[35.6762,139.6503], 'tokyo':[35.6762,139.6503],
+  'new york':[40.7128,-74.0060],
+  'singapore':[1.3521,103.8198], 'singapur':[1.3521,103.8198],
+  'valencia':[39.4699,-0.3763],
+  'nizza':[43.7102,7.2620], 'nice':[43.7102,7.2620],
+  'madeira':[32.7607,-16.9595],
+  'kapstadt':[-33.9249,18.4241], 'cape town':[-33.9249,18.4241],
+  'lissabon':[38.7223,-9.1393], 'lisbon':[38.7223,-9.1393],
+  'moskau':[55.7558,37.6173], 'moscow':[55.7558,37.6173],
+  'sun diego':[32.7157,-117.1611], 'san diego':[32.7157,-117.1611],
+  'kroatien':[44.1194,15.2314], 'croatia':[44.1194,15.2314],
+  'italien':[41.9028,12.4964], 'italy':[41.9028,12.4964],
+  'thailand':[13.7563,100.5018],
+  'australien':[-33.8688,151.2093], 'australia':[-33.8688,151.2093],
+  'schweiz':[46.9480,7.4474], 'switzerland':[46.9480,7.4474],
+  'lappland':[66.5039,25.7294], 'lapland':[66.5039,25.7294],
+  'griechenland':[37.9838,23.7275], 'greece':[37.9838,23.7275],
+  'costa rica':[9.9281,-84.0907],
+  'brasilien':[-22.9068,-43.1729], 'brazil':[-22.9068,-43.1729],
+  'zypern':[35.1856,33.3823], 'cyprus':[35.1856,33.3823]
+};
+
+function geoLookup(name){
+  const norm = name.toLowerCase().trim();
+  if(GEO[norm]) return GEO[norm];
+  const key = Object.keys(GEO).find(k => norm.includes(k) || k.includes(norm));
+  return key ? GEO[key] : null;
+}
+
+function latLonToPercent(lat, lon){
+  return { left: ((lon + 180) / 360) * 100, top: ((90 - lat) / 180) * 100 };
+}
+
+function renderMapPins(visited, wishlist){
+  const container = document.getElementById('mapPins');
+  if(!container) return;
+  container.innerHTML = '';
+
+  function addPins(list, cls){
+    list.forEach(name => {
+      const coords = geoLookup(name);
+      if(!coords) return;
+      const pos = latLonToPercent(coords[0], coords[1]);
+      const pin = document.createElement('div');
+      pin.className = 'map-pin ' + cls;
+      pin.dataset.leftPct = pos.left;
+      pin.dataset.topPct = pos.top;
+      pin.innerHTML = `<span class="pin-tooltip">${escapeHtml(name)}</span>`;
+      container.appendChild(pin);
+    });
+  }
+
+  addPins(visited, 'visited');
+  addPins(wishlist, 'wishlist');
+  if(typeof window.__positionMapPins === 'function') window.__positionMapPins();
+}
+
+function loadWeltkarte(bucketlistOrte){
+  const items = bucketlistOrte || [];
+  const visited = items.filter(item => item.done).map(item => item.text);
+  const wishlist = items.filter(item => !item.done).map(item => item.text);
+  renderMapPins(visited, wishlist);
+}
+
+/* =========================================================
+   WELTKARTE – Zoom & Pan (Mausrad, Buttons, Ziehen,
+   Zwei-Finger-Pinch auf Touch-Geräten)
+   ========================================================= */
+(function(){
+  const viewport = document.getElementById('mapViewport');
+  const layer = document.getElementById('mapZoomLayer');
+  const pinsContainer = document.getElementById('mapPins');
+  if(!viewport || !layer) return;
+
+  const zoomInBtn = document.getElementById('mapZoomIn');
+  const zoomOutBtn = document.getElementById('mapZoomOut');
+  const zoomResetBtn = document.getElementById('mapZoomReset');
+
+  const MIN_SCALE = 1;
+  const MAX_SCALE = 5;
+  let scale = 1, panX = 0, panY = 0;
+  let isDragging = false, dragMoved = false;
+  let startX = 0, startY = 0, startPanX = 0, startPanY = 0;
+
+  /* Die Punkte liegen NICHT in der gezoomten Ebene, sondern werden
+     bei jedem Zoom/Pan als feste Pixelposition neu berechnet. So
+     bleiben die Kreise immer gestochen scharf (kein verschachteltes
+     CSS-Scale, das beim Hoch-/Runterskalieren unscharf werden kann). */
+  function positionPins(){
+    if(!pinsContainer) return;
+    const vw = viewport.clientWidth, vh = viewport.clientHeight;
+    pinsContainer.querySelectorAll('.map-pin').forEach(pin => {
+      const leftPct = parseFloat(pin.dataset.leftPct);
+      const topPct = parseFloat(pin.dataset.topPct);
+      pin.style.left = (panX + (leftPct / 100) * vw * scale) + 'px';
+      pin.style.top = (panY + (topPct / 100) * vh * scale) + 'px';
+    });
+  }
+  window.__positionMapPins = positionPins;
+
+  function apply(){
+    layer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    positionPins();
+  }
+
+  function clampPan(){
+    const vw = viewport.clientWidth, vh = viewport.clientHeight;
+    const cw = vw * scale, ch = vh * scale;
+    const minX = Math.min(0, vw - cw);
+    const minY = Math.min(0, vh - ch);
+    panX = Math.max(minX, Math.min(0, panX));
+    panY = Math.max(minY, Math.min(0, panY));
+  }
+
+  function setScale(newScale, clientX, clientY){
+    newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+    const rect = viewport.getBoundingClientRect();
+    const originX = clientX !== undefined ? clientX - rect.left : rect.width / 2;
+    const originY = clientY !== undefined ? clientY - rect.top : rect.height / 2;
+    const ratio = newScale / scale;
+    panX = originX - (originX - panX) * ratio;
+    panY = originY - (originY - panY) * ratio;
+    scale = newScale;
+    clampPan();
+    apply();
+  }
+
+  function resetView(){
+    scale = 1; panX = 0; panY = 0;
+    apply();
+  }
+
+  zoomInBtn.addEventListener('click', () => setScale(scale + 0.7));
+  zoomOutBtn.addEventListener('click', () => setScale(scale - 0.7));
+  zoomResetBtn.addEventListener('click', resetView);
+
+  viewport.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.3 : -0.3;
+    setScale(scale + delta, e.clientX, e.clientY);
+  }, { passive:false });
+
+  viewport.addEventListener('mousedown', (e) => {
+    if(scale <= MIN_SCALE) return;
+    isDragging = true;
+    dragMoved = false;
+    viewport.classList.add('dragging');
+    startX = e.clientX; startY = e.clientY;
+    startPanX = panX; startPanY = panY;
+  });
+  window.addEventListener('mousemove', (e) => {
+    if(!isDragging) return;
+    dragMoved = true;
+    panX = startPanX + (e.clientX - startX);
+    panY = startPanY + (e.clientY - startY);
+    clampPan();
+    apply();
+  });
+  window.addEventListener('mouseup', () => {
+    isDragging = false;
+    viewport.classList.remove('dragging');
+  });
+
+  let pinchStartDist = null, pinchStartScale = 1;
+  let touchStartX = 0, touchStartY = 0, touchStartPanX = 0, touchStartPanY = 0;
+
+  function touchDist(t1, t2){
+    return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+  }
+
+  viewport.addEventListener('touchstart', (e) => {
+    if(e.touches.length === 2){
+      pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+      pinchStartScale = scale;
+    } else if(e.touches.length === 1){
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartPanX = panX;
+      touchStartPanY = panY;
+    }
+  }, { passive:true });
+
+  viewport.addEventListener('touchmove', (e) => {
+    if(e.touches.length === 2 && pinchStartDist){
+      e.preventDefault();
+      const newDist = touchDist(e.touches[0], e.touches[1]);
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      setScale(pinchStartScale * (newDist / pinchStartDist), midX, midY);
+    } else if(e.touches.length === 1 && scale > MIN_SCALE){
+      e.preventDefault();
+      panX = touchStartPanX + (e.touches[0].clientX - touchStartX);
+      panY = touchStartPanY + (e.touches[0].clientY - touchStartY);
+      clampPan();
+      apply();
+    }
+  }, { passive:false });
+
+  viewport.addEventListener('touchend', (e) => {
+    if(e.touches.length < 2) pinchStartDist = null;
+  });
+
+  window.addEventListener('resize', () => { clampPan(); apply(); });
+})();
+
+function renderCategory(category, items){
+  const listEl = document.getElementById('list-' + category);
+  const emptyHint = document.getElementById('emptyHint-' + category);
+  listEl.innerHTML = '';
+
+  if(!items || items.length === 0){
+    emptyHint.style.display = 'block';
+    return;
+  }
+  emptyHint.style.display = 'none';
+
+  items.forEach((item) => {
+    const row = document.createElement('div');
+    row.className = 'item' + (item.done ? ' done' : '');
+    row.dataset.row = item.row;
+    row.innerHTML = `
+      <span class="drag-handle" title="Ziehen zum Verschieben">⠿</span>
+      <input type="checkbox" ${item.done ? 'checked' : ''}>
+      <span class="text">${escapeHtml(item.text)}</span>
+      <button class="del" title="Löschen">✕</button>
+    `;
+    row.querySelector('input').addEventListener('change', (e) => {
+      toggleItem(category, item.row, e.target.checked);
+      if(e.target.checked) heartBurst(e.target);
+    });
+    row.querySelector('.del').addEventListener('click', () => deleteItem(category, item.row));
+    row.querySelector('.text').addEventListener('click', () => startEdit(row, category, item.row));
+    attachDragHandlers(row, category, item.row);
+    listEl.appendChild(row);
+  });
+}
+
+function startEdit(row, category, itemRow){
+  const textEl = row.querySelector('.text');
+  const currentText = textEl.textContent;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'edit-text';
+  input.value = currentText;
+  textEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  let finished = false;
+  function finish(save){
+    if(finished) return;
+    finished = true;
+    const newText = input.value.trim();
+    if(save && newText && newText !== currentText){
+      editItem(category, itemRow, newText);
+    } else {
+      loadItems();
+    }
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); finish(true); }
+    if(e.key === 'Escape'){ e.preventDefault(); finish(false); }
+  });
+  input.addEventListener('blur', () => finish(true));
+}
+
+/* =========================================================
+   Verschieben per Ziehen (Pointer Events – funktioniert mit
+   Maus UND Touch/Finger, anders als die native HTML5-
+   Drag&Drop-API, die auf Touchgeräten nicht funktioniert).
+   ========================================================= */
+function attachDragHandlers(row, category, itemRow){
+  const handle = row.querySelector('.drag-handle');
+
+  handle.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    const pointerId = e.pointerId;
+    const listEl = row.parentElement;
+    handle.setPointerCapture(pointerId);
+    row.classList.add('dragging');
+
+    function onMove(ev){
+      if(ev.pointerId !== pointerId) return;
+      const siblings = Array.from(listEl.querySelectorAll('.item')).filter(el => el !== row);
+      let placed = false;
+      for(const sib of siblings){
+        const rect = sib.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if(ev.clientY < midY){
+          listEl.insertBefore(row, sib);
+          placed = true;
+          break;
+        }
+      }
+      if(!placed) listEl.appendChild(row);
+    }
+
+    function onUp(ev){
+      if(ev.pointerId !== pointerId) return;
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      handle.releasePointerCapture(pointerId);
+      row.classList.remove('dragging');
+
+      const items = Array.from(listEl.querySelectorAll('.item'));
+      const newRow = items.indexOf(row) + 2;
+      if(newRow !== itemRow){
+        const steps = Math.abs(newRow - itemRow);
+        const direction = newRow < itemRow ? 'up' : 'down';
+        moveItemSteps(category, itemRow, direction, steps);
+      }
+    }
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+async function postAction(payload){
+  return fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // vermeidet CORS-Preflight
+    body: JSON.stringify(payload)
+  });
+}
+
+async function addItem(category, text){
+  if(!isConfigured()) return;
+  await postAction({ action: 'add', category, text });
+  loadItems();
+}
+
+async function editItem(category, row, text){
+  if(!isConfigured()) return;
+  await postAction({ action: 'edit', category, row, text });
+  loadItems();
+}
+
+async function toggleItem(category, row, done){
+  if(!isConfigured()) return;
+  await postAction({ action: 'toggle', category, row, done });
+  loadItems();
+}
+
+/* Kleiner Herzenregen, wenn ein Punkt abgehakt wird */
+function heartBurst(targetEl){
+  const rect = targetEl.getBoundingClientRect();
+  const originX = rect.left + rect.width / 2;
+  const originY = rect.top + rect.height / 2;
+  const emojis = ['❤️', '💕', '🌸'];
+  for(let i = 0; i < 6; i++){
+    const el = document.createElement('span');
+    el.className = 'mini-heart';
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    el.style.left = originX + 'px';
+    el.style.top = originY + 'px';
+    el.style.fontSize = (13 + Math.random() * 10) + 'px';
+    document.body.appendChild(el);
+    const dx = (Math.random() - 0.5) * 70;
+    const dy = -40 - Math.random() * 50;
+    requestAnimationFrame(() => {
+      el.style.transform = `translate(${dx}px, ${dy}px) scale(1.1)`;
+      el.style.opacity = '0';
+    });
+    setTimeout(() => el.remove(), 950);
+  }
+}
+
+async function deleteItem(category, row){
+  if(!isConfigured()) return;
+  await postAction({ action: 'delete', category, row });
+  loadItems();
+}
+
+async function moveItemSteps(category, row, direction, steps){
+  if(!isConfigured()) return;
+  let currentRow = row;
+  for(let i = 0; i < steps; i++){
+    await postAction({ action: 'move', category, row: currentRow, direction });
+    currentRow += (direction === 'up' ? -1 : 1);
+  }
+  loadItems();
+}
+
+document.querySelectorAll('.add-form').forEach(form => {
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const category = form.getAttribute('data-category');
+    const input = form.querySelector('input[type="text"]');
+    const text = input.value.trim();
+    if(!text) return;
+    input.value = '';
+    addItem(category, text);
+  });
+});
+
+loadItems();
+</script>
+
+</body>
+</html>

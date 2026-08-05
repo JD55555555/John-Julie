@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>John & Julie: Unsere ersten 3 Monate ❤️</title>
+
+<!--
+  ===========================================================
+  ANLEITUNG ZUM ANPASSEN (kannst du löschen, wenn fertig)
+  ===========================================================
+  1. Suche nach [IN ECKIGEN KLAMMERN] im Text. Das sind Platzhalter.
+  2. Fotos: Ersetze die Kästen mit der Klasse "photo-placeholder"
+     durch <img src="dein-foto.jpg" alt="..."> oder setze im CSS
+     ein background-image.
+  3. Datum: Im <script> ganz unten steht "START_DATE". Dort das
+     echte Datum eures ersten Tages eintragen (Format: "YYYY-MM-DD").
+  4. Geheimer Spitzname-Bereich und Song wurden NICHT eingebaut
+     (laut Auswahl). Bei Bedarf einfach fragen, das lässt sich
+     leicht ergänzen.
+  ===========================================================
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --pink: #f3c9d4;
+    --pink-deep: #e8a3b8;
+    --beige: #f6efe6;
+    --white: #fffaf7;
+    --text: #5a4a4a;
+    --text-dark: #3d2f2f;
+    --shadow: rgba(180, 120, 140, 0.25);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    font-family:'Poppins', sans-serif;
+    color:var(--text);
+    background:var(--beige);
+    overflow-x:hidden;
+    cursor:none; /* eigener Herz-Cursor ersetzt den Standard-Cursor auf Desktop */
+  }
+
+  @media (max-width:900px){
+    body{ cursor:auto; } /* auf Touch-Geräten normaler Cursor */
+  }
+
+  h1,h2,h3{ font-family:'Playfair Display', serif; color:var(--text-dark); }
+
+  a{ text-decoration:none; }
+
+  section{ padding: 90px 6vw; position:relative; }
+
+  /* ---------- Herz-Cursor & Partikel ---------- */
+  .cursor-heart, .floating-heart{
+    position:fixed;
+    pointer-events:none;
+    z-index:9999;
+    user-select:none;
+  }
+
+  .cursor-dot{
+    position:fixed;
+    width:14px;
+    height:14px;
+    background:var(--pink-deep);
+    border-radius:50% 50% 50% 0;
+    transform:rotate(45deg);
+    pointer-events:none;
+    z-index:9998;
+    transition: transform .05s linear;
+  }
+
+  /* ---------- Reveal-on-scroll ---------- */
+  .reveal{
+    opacity:0;
+    transform:translateY(40px);
+    transition:opacity .9s ease, transform .9s ease;
+  }
+  .reveal.visible{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    height:100vh;
+    min-height:600px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:0 6vw;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.55)),
+      radial-gradient(circle at 20% 20%, var(--pink) 0%, transparent 55%),
+      radial-gradient(circle at 80% 30%, var(--beige) 0%, transparent 50%),
+      linear-gradient(135deg, var(--pink) 0%, var(--beige) 55%, var(--white) 100%);
+    background-size:cover;
+    position:relative;
+  }
+
+  .hero-photo-placeholder{
+    /* Ersetze dies durch euer großes gemeinsames Foto als Hintergrund,
+       z.B. background: url('unser-foto.jpg') center/cover; */
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0 20px, rgba(255,255,255,0) 20px 40px);
+    z-index:0;
+  }
+
+  .hero > *{ position:relative; z-index:1; }
+
+  .hero .eyebrow{
+    letter-spacing:3px;
+    text-transform:uppercase;
+    font-size:0.8rem;
+    color:var(--pink-deep);
+    margin-bottom:18px;
+    font-weight:600;
+  }
+
+  .hero h1{
+    font-size:clamp(2rem, 5vw, 3.6rem);
+    max-width:850px;
+    line-height:1.25;
+    margin-bottom:14px;
+  }
+
+  .hero .names{
+    font-size:1.1rem;
+    color:var(--text);
+    margin-bottom:40px;
+  }
+
+  .btn{
+    display:inline-block;
+    background:var(--pink-deep);
+    color:#fff;
+    padding:16px 38px;
+    border:none;
+    border-radius:40px;
+    font-family:'Poppins', sans-serif;
+    font-size:1rem;
+    font-weight:500;
+    cursor:pointer;
+    box-shadow:0 10px 25px var(--shadow);
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .btn:hover{ transform:translateY(-3px); box-shadow:0 16px 30px var(--shadow); }
+
+  .scroll-hint{
+    position:absolute;
+    bottom:34px;
+    font-size:0.8rem;
+    letter-spacing:2px;
+    color:var(--text);
+    opacity:0.7;
+    animation:bob 2.2s ease-in-out infinite;
+  }
+  @keyframes bob{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(8px);} }
+
+  /* ---------- Section headings ---------- */
+  .section-title{
+    text-align:center;
+    font-size:clamp(1.6rem, 3.4vw, 2.4rem);
+    margin-bottom:12px;
+  }
+  .section-sub{
+    text-align:center;
+    max-width:600px;
+    margin:0 auto 60px auto;
+    color:var(--text);
+    opacity:0.85;
+  }
+
+  /* ---------- Kennenlernen ---------- */
+  .story{
+    max-width:800px;
+    margin:0 auto;
+    text-align:center;
+  }
+  .story p{
+    font-size:1.05rem;
+    line-height:1.9;
+    margin-bottom:22px;
+  }
+  .story .highlight{
+    display:inline-block;
+    background:var(--white);
+    border-radius:16px;
+    padding:22px 28px;
+    box-shadow:0 12px 30px var(--shadow);
+    margin-top:20px;
+    font-style:italic;
+  }
+
+  /* ---------- Zeitleiste ---------- */
+  .timeline{
+    max-width:900px;
+    margin:0 auto;
+    position:relative;
+  }
+  .timeline::before{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:0;
+    bottom:0;
+    width:2px;
+    background:linear-gradient(var(--pink), var(--pink-deep));
+    transform:translateX(-50%);
+  }
+  .t-item{
+    width:50%;
+    padding:0 40px 60px 40px;
+    position:relative;
+  }
+  .t-item:nth-child(odd){ left:0; text-align:right; }
+  .t-item:nth-child(even){ left:50%; text-align:left; }
+
+  .t-dot{
+    position:absolute;
+    top:4px;
+    width:16px; height:16px;
+    background:var(--pink-deep);
+    border:4px solid var(--white);
+    border-radius:50%;
+    box-shadow:0 0 0 2px var(--pink);
+  }
+  .t-item:nth-child(odd) .t-dot{ right:-8px; }
+  .t-item:nth-child(even) .t-dot{ left:-8px; }
+
+  .t-card{
+    background:var(--white);
+    border-radius:16px;
+    padding:22px;
+    box-shadow:0 12px 26px var(--shadow);
+    display:inline-block;
+    max-width:340px;
+  }
+  .t-card .emoji{ font-size:1.6rem; margin-bottom:6px; display:block; }
+  .t-card h3{ font-size:1.1rem; margin-bottom:4px; }
+  .t-card .date{ font-size:0.8rem; color:var(--pink-deep); margin-bottom:10px; font-weight:600; }
+  .t-card p{ font-size:0.9rem; line-height:1.6; margin-bottom:12px; }
+
+  .photo-placeholder{
+    /* Ersatz für echtes Foto: einfach <img> statt div verwenden */
+    height:120px;
+    border-radius:10px;
+    background:repeating-linear-gradient(135deg, var(--beige) 0 12px, var(--pink) 12px 24px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.75rem;
+    color:var(--text-dark);
+    opacity:0.7;
+    border:1px dashed var(--pink-deep);
+  }
+  img.photo-placeholder{
+    width:100%;
+    height:120px;
+    object-fit:cover;
+    border-style:solid;
+    opacity:1;
+    cursor:pointer;
+  }
+  img.photo-placeholder.portrait{
+    height:320px;
+    object-fit:contain;
+    background:var(--beige);
+    padding:2px;
+  }
+  .photo-row{
+    display:flex;
+    gap:6px;
+    height:120px;
+    margin-bottom:12px;
+  }
+  .photo-row img{
+    flex:1;
+    min-width:0;
+    height:100%;
+    object-fit:cover;
+    border-radius:10px;
+    border:1px solid var(--pink-deep);
+    cursor:pointer;
+  }
+
+  /* ---------- Lightbox ---------- */
+  .lightbox-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(61,47,47,0.9);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:30px;
+    z-index:10000;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .3s ease;
+  }
+  .lightbox-overlay.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .lightbox-overlay img{
+    max-width:90vw;
+    max-height:90vh;
+    border-radius:14px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.4);
+    object-fit:contain;
+    cursor:zoom-out;
+  }
+
+  @media (max-width:760px){
+    .timeline::before{ left:18px; }
+    .t-item, .t-item:nth-child(even){ width:100%; left:0; text-align:left; padding-left:50px; padding-right:10px; }
+    .t-item:nth-child(odd) .t-dot, .t-item:nth-child(even) .t-dot{ left:10px; }
+    .t-card{ max-width:100%; }
+  }
+
+  /* ---------- Gründe / Flip Cards ---------- */
+  .cards-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:26px;
+    max-width:1000px;
+    margin:0 auto;
+  }
+  .flip-card{
+    perspective:1200px;
+    height:220px;
+    cursor:pointer;
+  }
+  .flip-inner{
+    position:relative;
+    width:100%; height:100%;
+    transition:transform .7s cubic-bezier(.4,.2,.2,1);
+    transform-style:preserve-3d;
+  }
+  .flip-card.flipped .flip-inner{ transform:rotateY(180deg); }
+
+  .flip-front, .flip-back{
+    position:absolute;
+    inset:0;
+    backface-visibility:hidden;
+    border-radius:18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px;
+    box-shadow:0 14px 30px var(--shadow);
+  }
+  .flip-front{
+    background:var(--white);
+  }
+  .flip-front .emoji{ font-size:2.4rem; margin-bottom:10px; }
+  .flip-front h3{ font-size:1.05rem; }
+  .flip-front .tap-hint{ font-size:0.7rem; opacity:0.5; margin-top:10px; }
+
+  .flip-back{
+    background:linear-gradient(135deg, var(--pink), var(--pink-deep));
+    color:#fff;
+    transform:rotateY(180deg);
+    font-size:0.92rem;
+    line-height:1.6;
+  }
+
+  /* ---------- Countdown ---------- */
+  .countdown-wrap{
+    display:flex;
+    flex-wrap:wrap;
+    gap:26px;
+    justify-content:center;
+    max-width:900px;
+    margin:0 auto;
+  }
+  .countdown-card{
+    background:var(--white);
+    border-radius:20px;
+    padding:30px 26px;
+    box-shadow:0 14px 30px var(--shadow);
+    text-align:center;
+    flex:1;
+    min-width:260px;
+  }
+  .countdown-card h3{ margin-bottom:18px; font-size:1.15rem; }
+  .countdown-numbers{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+  }
+  .countdown-numbers div{
+    background:var(--beige);
+    border-radius:12px;
+    padding:12px 10px;
+    min-width:60px;
+  }
+  .countdown-numbers span{
+    display:block;
+    font-size:1.5rem;
+    font-weight:600;
+    color:var(--text-dark);
+    font-family:'Playfair Display', serif;
+  }
+  .countdown-numbers small{
+    font-size:0.65rem;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    opacity:0.65;
+  }
+
+  /* ---------- Brief ---------- */
+  .letter-wrap{
+    max-width:700px;
+    margin:0 auto;
+    background:var(--white);
+    border-radius:20px;
+    padding:50px 40px;
+    box-shadow:0 20px 40px var(--shadow);
+    position:relative;
+  }
+  .letter-wrap::before{
+    content:"💌";
+    position:absolute;
+    top:-26px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:2rem;
+    background:var(--beige);
+    border-radius:50%;
+    padding:10px;
+  }
+  #letter-text{
+    font-size:1.02rem;
+    line-height:2;
+    white-space:pre-wrap;
+    min-height:260px;
+  }
+  .letter-signature{
+    margin-top:20px;
+    text-align:right;
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+  }
+
+  /* ---------- Extra Button ---------- */
+  .extra-section{
+    text-align:center;
+  }
+  #secretBtn{
+    background:var(--text-dark);
+  }
+  #secretMessage{
+    max-width:520px;
+    margin:26px auto 0 auto;
+    background:var(--white);
+    border-radius:16px;
+    padding:26px;
+    box-shadow:0 14px 30px var(--shadow);
+    font-size:1rem;
+    line-height:1.7;
+    opacity:0;
+    transform:scale(0.9);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  #secretMessage.show{ opacity:1; transform:scale(1); }
+
+  footer{
+    text-align:center;
+    padding:40px;
+    font-size:0.8rem;
+    color:var(--text);
+    opacity:0.6;
+  }
+
+  .empty-hint{
+    text-align:center;
+    opacity:0.6;
+    font-size:0.9rem;
+    padding:10px 20px 30px 20px;
+  }
+
+  /* ---------- Navigation ---------- */
+  .site-nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:500;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 6vw;
+    background:rgba(255,250,247,0.75);
+    -webkit-backdrop-filter:blur(6px);
+    backdrop-filter:blur(6px);
+    box-shadow:0 4px 20px rgba(180,120,140,0.12);
+  }
+  .site-nav .nav-brand{
+    font-family:'Playfair Display', serif;
+    font-weight:600;
+    color:var(--text-dark);
+    font-size:1.05rem;
+  }
+  .site-nav .nav-links{
+    display:flex;
+    gap:22px;
+    flex-wrap:wrap;
+  }
+  .site-nav .nav-links a{
+    font-size:0.85rem;
+    color:var(--text);
+    font-weight:500;
+    padding:6px 12px;
+    border-radius:20px;
+    transition:background .2s ease, color .2s ease;
+  }
+  .site-nav .nav-links a:hover, .site-nav .nav-links a.active{
+    background:var(--pink);
+    color:var(--text-dark);
+  }
+  @media (max-width:640px){
+    .site-nav{ flex-direction:column; gap:8px; padding:10px 4vw; }
+    .site-nav .nav-links{ gap:8px; justify-content:center; }
+    .site-nav .nav-links a{ font-size:0.72rem; padding:5px 9px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html" class="nav-brand">John &amp; Julie</a>
+  <div class="nav-links">
+    <a href="index.html" class="active">Start</a>
+    <a href="bucketliste.html">Bucketlist</a>
+    <a href="galerie.html">Galerie</a>
+    <a href="memory.html">Memory</a>  </div>
+</nav>
+
+<div class="cursor-dot" id="cursorDot"></div>
+
+<div class="lightbox-overlay" id="lightbox">
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<!-- ================= HERO ================= -->
+<section class="hero" id="top">
+  <div class="hero-photo-placeholder"></div>
+  <p class="eyebrow">John &amp; Julie</p>
+  <h1>Schon 3 Monate und ich freue mich auf alles, was noch kommt.</h1>
+  <p class="names">Seit dem 03.05.2026 gehören wir zusammen ❤️</p>
+  <a href="#kennenlernen" class="btn">Unsere Geschichte entdecken</a>
+  <div class="scroll-hint">▾ SCROLLEN ▾</div>
+</section>
+
+<!-- ================= ABSCHNITT 1: KENNENLERNEN ================= -->
+<section id="kennenlernen">
+  <h2 class="section-title reveal">Unser Kennenlernen</h2>
+  <p class="section-sub reveal">Wie alles begann</p>
+  <div class="story">
+    <p class="reveal">
+      Kennengelernt haben wir uns schon in der Einführungswoche, doch es sollte noch lange
+      dauern, bis daraus mehr wurde. Sobald du mich angelächelt hast, musste ich grinsen,
+      und irgendwie stand für einen Moment die Zeit still. Wir schrieben hin und wieder,
+      meist nur wegen der Uni. Auf deiner Geburtstagsfeier, zu der ich mir extra meinen
+      Bruder als Rückendeckung mitgenommen habe, hast du mich sogar zum Tanzen eingeladen.
+      Danach verging wieder viel Zeit, bis wir im 5. Semester erfuhren, dass wir zusammen
+      Corporate Finance haben würden.
+    </p>
+    <p class="reveal">
+      Am Ende saßen wir doch nicht zusammen im Kurs, dafür sammelten sich deine Instagram-Storys:
+      erst aus Kasachstan, dann aus San Diego, dann Hawaii. Erst da wurde mir klar, dass du die
+      ganze Zeit schon da warst, ohne dass ich es gemerkt hatte. Am 24.01. hast du dich dann selbst
+      gemeldet, eigentlich nur wegen einer Uni-Frage. Drei Wochen haben wir geschrieben, bis ich
+      dich gefragt habe, ob wir mal essen gehen.
+    </p>
+    <div class="highlight reveal">
+      „Schon als du eingestiegen bist, war es dein Lächeln, das mir aufgefallen ist."
+    </div>
+  </div>
+</section>
+
+<!-- ================= ABSCHNITT 2: SCHÖNSTE MOMENTE ================= -->
+<section id="momente" style="background:var(--white);">
+  <h2 class="section-title reveal">Unsere schönsten Momente</h2>
+  <p class="section-sub reveal">Eine kleine Reise durch drei wundervolle Monate</p>
+
+  <p id="momenteHint" class="empty-hint" style="display:none;"></p>
+  <div class="timeline" id="timeline"></div>
+</section>
+
+<!-- ================= ABSCHNITT 3: GRÜNDE ================= -->
+<section id="gruende">
+  <h2 class="section-title reveal">Gründe, warum ich dich liebe</h2>
+  <p class="section-sub reveal">Klicke auf eine Karte, um mehr zu erfahren</p>
+
+  <div class="cards-grid">
+    <div class="flip-card reveal" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <span class="emoji">😊</span>
+          <h3>Dein Lächeln</h3>
+          <span class="tap-hint">Zum Umdrehen klicken</span>
+        </div>
+        <div class="flip-back">Schon in der Einführungswoche musste ich grinsen, sobald du mich angelächelt hast. Bis heute macht dein Lächeln genau das mit mir.</div>
+      </div>
+    </div>
+
+    <div class="flip-card reveal" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <span class="emoji">🤗</span>
+          <h3>Deine Fürsorge</h3>
+          <span class="tap-hint">Zum Umdrehen klicken</span>
+        </div>
+        <div class="flip-back">Ich liebe, wie fürsorglich du bist und wie du dir immer wieder Mühe gibst, mir eine Freude zu machen, wie an meinem 22. Geburtstag, den du für mich vorbereitet hast.</div>
+      </div>
+    </div>
+
+    <div class="flip-card reveal" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <span class="emoji">❤️</span>
+          <h3>Wie du mich glücklich machst</h3>
+          <span class="tap-hint">Zum Umdrehen klicken</span>
+        </div>
+        <div class="flip-back">Ich liebe, wie glücklich du mich machst und all unsere gemeinsamen Erinnerungen, die wir in diesen drei Monaten schon gesammelt haben.</div>
+      </div>
+    </div>
+
+    <div class="flip-card reveal" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <span class="emoji">🫶</span>
+          <h3>Dass ich immer ich selbst sein kann</h3>
+          <span class="tap-hint">Zum Umdrehen klicken</span>
+        </div>
+        <div class="flip-back">Ich liebe, dass ich bei dir ganz ich selbst sein kann, ohne mich zu verstellen. Du gibst mir Kraft und glaubst an mich.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ABSCHNITT 4: COUNTDOWN ================= -->
+<section id="countdown" style="background:var(--white);">
+  <h2 class="section-title reveal">Unsere gemeinsame Zeit</h2>
+
+  <div class="countdown-wrap">
+    <div class="countdown-card reveal" style="border:2px solid var(--pink-deep);">
+      <h3>❤️ Zusammen seit dem 03.05.2026</h3>
+      <div class="countdown-numbers" id="cd-together">
+        <div><span id="dT">--</span><small>Tage</small></div>
+        <div><span id="hT">--</span><small>Std</small></div>
+        <div><span id="mT">--</span><small>Min</small></div>
+        <div><span id="sT">--</span><small>Sek</small></div>
+      </div>
+    </div>
+    <div class="countdown-card reveal">
+      <h3>💍 1 Jahr</h3>
+      <div class="countdown-numbers" id="cd-1y">
+        <div><span id="d1">--</span><small>Tage</small></div>
+        <div><span id="h1">--</span><small>Std</small></div>
+        <div><span id="m1">--</span><small>Min</small></div>
+        <div><span id="s1">--</span><small>Sek</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ABSCHNITT 5: BRIEF ================= -->
+<section id="brief">
+  <h2 class="section-title reveal">Ein Brief an dich</h2>
+  <p class="section-sub reveal">Ein paar Worte, die von Herzen kommen</p>
+
+  <div class="letter-wrap reveal">
+    <div id="letter-text" data-full="Liebste Julie,
+
+drei Monate sind vergangen, seit ich dich auf der Parkbank in München gefragt habe, ob du meine Freundin sein willst und es fühlt sich an, als hätten wir schon eine ganze Geschichte zusammen geschrieben.
+
+Von unserem ersten Date im Extrablatt über unsere gemeinsamen Urlaube bis zum Heißluftballon über den Wolken: Jeder Moment mit dir hat diese Zeit zu etwas Besonderem gemacht. Danke, dass du so fürsorglich bist, dass du an mich glaubst und dass ich bei dir immer ganz ich selbst sein kann.
+
+Ich kann es kaum erwarten, die nächsten Monate und Jahre mit dir zu erleben.
+
+In Liebe,"></div>
+    <div class="letter-signature">John</div>
+  </div>
+</section>
+
+<!-- ================= EXTRA: NICHT DRÜCKEN ================= -->
+<section class="extra-section">
+  <h2 class="section-title reveal">Noch eine Kleinigkeit...</h2>
+  <button id="secretBtn" class="btn reveal">Nicht drücken 🤭</button>
+  <div id="secretMessage">
+    Danke für die schönsten drei Monate. Ich liebe jede Minute mit dir und freue mich auf unendlich viele weitere. ❤️
+  </div>
+</section>
+
+<footer>
+  Für Julie, mit ganz viel Liebe gemacht von John.
+</footer>
+
+<script>
+/* =========================================================
+   KONFIGURATION: HIER ANPASSEN
+   ========================================================= */
+// Startdatum eurer Beziehung (Format: "YYYY-MM-DD")
+const START_DATE = new Date("2026-05-03T00:00:00"); // Parkbank in München
+
+
+/* =========================================================
+   Herz-Cursor (Desktop)
+   ========================================================= */
+const cursorDot = document.getElementById('cursorDot');
+let lastHeartTime = 0;
+
+window.addEventListener('mousemove', (e) => {
+  cursorDot.style.left = (e.clientX - 7) + 'px';
+  cursorDot.style.top = (e.clientY - 7) + 'px';
+
+  const now = Date.now();
+  if (now - lastHeartTime > 60) {
+    lastHeartTime = now;
+    spawnHeart(e.clientX, e.clientY, 14, 1400, false);
+  }
+});
+
+function spawnHeart(x, y, size, duration, big){
+  const heart = document.createElement('div');
+  heart.className = 'floating-heart';
+  heart.textContent = '❤';
+  heart.style.left = x + 'px';
+  heart.style.top = y + 'px';
+  heart.style.fontSize = size + 'px';
+  heart.style.color = big ? '#e8a3b8' : 'rgba(232,163,184,0.8)';
+  heart.style.transition = `transform ${duration}ms ease-out, opacity ${duration}ms ease-out`;
+  document.body.appendChild(heart);
+
+  requestAnimationFrame(() => {
+    const dx = (Math.random() - 0.5) * 60;
+    const dy = -60 - Math.random() * 60;
+    heart.style.transform = `translate(${dx}px, ${dy}px) scale(${big ? 1.4 : 0.6})`;
+    heart.style.opacity = '0';
+  });
+
+  setTimeout(() => heart.remove(), duration + 50);
+}
+
+/* =========================================================
+   Konfetti / Herzen beim Laden der Seite
+   ========================================================= */
+function confettiBurst(count){
+  const emojis = ['❤️','💕','💗','🌸'];
+  for(let i=0;i<count;i++){
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'floating-heart';
+      el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      el.style.left = Math.random()*100 + 'vw';
+      el.style.top = '-40px';
+      el.style.fontSize = (14 + Math.random()*18) + 'px';
+      el.style.opacity = '0.9';
+      const fallDuration = 3500 + Math.random()*2500;
+      el.style.transition = `transform ${fallDuration}ms linear, opacity ${fallDuration}ms ease-in`;
+      document.body.appendChild(el);
+      requestAnimationFrame(() => {
+        el.style.transform = `translateY(${window.innerHeight + 80}px) rotate(${Math.random()*360}deg)`;
+        el.style.opacity = '0';
+      });
+      setTimeout(() => el.remove(), fallDuration + 100);
+    }, i * 90);
+  }
+}
+/* Konfetti fällt nicht mehr automatisch beim Laden der Seite,
+   nur noch beim Klick auf den "Nicht drücken"-Button unten. */
+
+/* =========================================================
+   Scroll-Reveal-Animationen
+   ========================================================= */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting){
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15 });
+function observeReveal(el){ observer.observe(el); }
+document.querySelectorAll('.reveal').forEach(observeReveal);
+
+/* =========================================================
+   Unsere schönsten Momente – statischer Inhalt
+   ========================================================= */
+const FALLBACK_MOMENTS = [
+  { emoji:'📍', title:'Erstes Date', date:'20.02.2026', image:'images/erstes-date.jpg', imageHint:'Foto: Extrablatt', text:'Unser erstes Date im Extrablatt: Wir haben uns bis tief in die Nacht unterhalten und die Zeit dabei völlig vergessen.' },
+  { emoji:'✈️', title:'Der Urlaubs-Vorschlag', date:'2. Date', image:'images/urlaubsvorschlag.jpg', imageHint:'Foto hier einfügen', text:'Schon beim zweiten Treffen wollte ich mehr Zeit mit dir, also habe ich gefragt, ob wir zusammen in den Urlaub fliegen wollen.' },
+  { emoji:'❤️', title:'Erster Kuss', date:'3. Date, im Kino', images:['images/kuss-1.jpg','images/kuss-2.jpg','images/kuss-3.jpg'], imageHint:'Foto hier einfügen', text:'Mitten im Kino, bei unserem dritten Date, haben wir uns das erste Mal geküsst.' },
+  { emoji:'🍳', title:'Erstes gemeinsames Kochen', date:'24.03.2026', images:['images/erstes-kochen-1.jpg','images/erstes-kochen-2.jpg'], imageHint:'Foto hier einfügen', text:'Wir haben bei dir zu Hause zum ersten Mal zusammen gekocht.' },
+  { emoji:'🌅', title:'Erster gemeinsamer Urlaub', date:'03.04.2026', image:'images/erster-urlaub.jpg', imageHint:'Foto: Sonnenuntergang in Zadar', text:'Unser erster gemeinsamer Urlaub führte uns nach Kroatien, inklusive einem unvergesslichen Sonnenuntergang in Zadar, den ich nie vergessen werde.' },
+  { emoji:'👨‍👩‍👧', title:'Deine Familie kennengelernt', date:'02.05.2026', image:'images/deine-familie.jpg', imageHint:'Foto hier einfügen', text:'Ich durfte deine Familie kennenlernen und habe mich seit Tag eins sehr wohl gefühlt.' },
+  { emoji:'💑', title:'Auf der Parkbank in München', date:'02.05. bis 04.05.2026', images:['images/parkbank-1.jpg','images/parkbank-2.jpg','images/parkbank-3.jpg'], imageHint:'Foto: Parkbank München', text:'Auf einer Parkbank, nachdem wir geschaukelt hatten, habe ich dich gefragt, ob du meine Freundin sein willst. Seitdem gehören wir offiziell zusammen. Unser Startpunkt: 03.05.2026.' },
+  { emoji:'🎓', title:'Bachelorarbeiten abgegeben', date:'26.05.2026', image:'images/bachelorarbeiten.jpg', imageHint:'Foto hier einfügen', text:'Wir haben beide unsere Bachelorarbeiten geschrieben und du hast mich dabei unglaublich viel unterstützt, dafür bin ich dir sehr dankbar.' },
+  { emoji:'🏖️', title:'Urlaub in Marbella', date:'26.05. bis 02.06.2026', images:['images/marbella-1.jpg','images/marbella-2.jpg','images/marbella-3.jpg'], imageHint:'Foto hier einfügen', text:'Ein weiterer gemeinsamer Urlaub, dieses Mal in Marbella.' },
+  { emoji:'👨‍👩‍👦', title:'Meine Familie kennengelernt', date:'06.06.2026', image:'images/meine-familie.jpg', imageHint:'Foto hier einfügen', text:'Dann hast du auch meine Familie kennengelernt.' },
+  { emoji:'🎂', title:'Mein 22. Geburtstag', date:'06.07.2026', image:'images/geburtstag.jpg', imageHint:'Foto hier einfügen', text:'Du hast mich mit einem unglaublichen 22. Geburtstag überrascht.' },
+  { emoji:'🥂', title:'Bachelorball', date:'11.07.2026', images:['images/bachelorball-1.jpg','images/bachelorball-2.jpg','images/bachelorball-3.jpg'], imageHint:'Foto hier einfügen', text:'Bachelorball und Zeugnisvergabe: ein weiterer Meilenstein, den wir zusammen gefeiert haben.' },
+  { emoji:'🪂', title:'Urlaub in Italien', date:'20.07. bis 29.07.2026', images:['images/italien-1.jpg','images/italien-2.jpg','images/italien-3.jpg'], imageHint:'Foto: Parasailing Italien', text:'Urlaub in Italien, mit Parasailing als absolutem Highlight und einem Trip nach Venedig, der Stadt der Liebe.' },
+  { emoji:'🎈', title:'Heißluftballonflug', date:'01.08.2026', image:'images/heissluftballonflug.jpg', imageHint:'Foto hier einfügen', text:'Gemeinsam über den Wolken: unser Flug im Heißluftballon.' },
+  { emoji:'🎉', title:'Unser Vierteljähriges', date:'03.08.2026', image:'images/vierteljaehriges.jpg', imageHint:'Foto hier einfügen', text:'Drei Monate seit der Parkbank in München und ich freue mich auf alles, was noch kommt.' }
+];
+
+const timelineEl = document.getElementById('timeline');
+const momenteHint = document.getElementById('momenteHint');
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+function renderMoments(items){
+  timelineEl.innerHTML = '';
+  if(!items || items.length === 0){
+    momenteHint.style.display = 'block';
+    momenteHint.textContent = 'Noch keine Momente eingetragen.';
+    return;
+  }
+  momenteHint.style.display = 'none';
+
+  items.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 't-item reveal';
+    let photoHtml;
+    if(item.images && item.images.length){
+      photoHtml = `<div class="photo-row">${item.images.map(src => `<img src="${escapeHtml(src)}" alt="${escapeHtml(item.title)}">`).join('')}</div>`;
+    } else if(item.image){
+      const portraitClass = item.portrait ? ' portrait' : '';
+      photoHtml = `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.title)}" class="photo-placeholder${portraitClass}">`;
+    } else {
+      photoHtml = `<div class="photo-placeholder">${escapeHtml(item.imageHint || 'Foto hier einfügen')}</div>`;
+    }
+    el.innerHTML = `
+      <span class="t-dot"></span>
+      <div class="t-card">
+        <span class="emoji">${item.emoji || '❤️'}</span>
+        <h3>${escapeHtml(item.title)}</h3>
+        <div class="date">${escapeHtml(item.date)}</div>
+        ${photoHtml}
+        <p>${escapeHtml(item.text)}</p>
+      </div>
+    `;
+    timelineEl.appendChild(el);
+    observeReveal(el);
+  });
+}
+
+function loadMoments(){
+  // Zeitleiste ist wieder rein statisch, keine Google-Sheet-Anbindung mehr.
+  renderMoments(FALLBACK_MOMENTS);
+}
+loadMoments();
+
+/* =========================================================
+   Lightbox: Fotos in der Zeitleiste vergrößert anzeigen
+   ========================================================= */
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+
+timelineEl.addEventListener('click', (e) => {
+  const img = e.target.closest('img');
+  if (!img) return;
+  lightboxImg.src = img.src;
+  lightboxImg.alt = img.alt;
+  lightbox.classList.add('show');
+});
+
+lightbox.addEventListener('click', () => {
+  lightbox.classList.remove('show');
+});
+
+/* =========================================================
+   Countdown zu 1 Jahr
+   ========================================================= */
+function addMonths(date, months){
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+const target1y = addMonths(START_DATE, 12);
+
+function updateCountdown(target, prefix){
+  const now = new Date();
+  let diff = target - now;
+  if (diff < 0) diff = 0;
+
+  const days = Math.floor(diff / (1000*60*60*24));
+  const hours = Math.floor((diff / (1000*60*60)) % 24);
+  const mins = Math.floor((diff / (1000*60)) % 60);
+  const secs = Math.floor((diff / 1000) % 60);
+
+  document.getElementById('d'+prefix).textContent = days;
+  document.getElementById('h'+prefix).textContent = String(hours).padStart(2,'0');
+  document.getElementById('m'+prefix).textContent = String(mins).padStart(2,'0');
+  document.getElementById('s'+prefix).textContent = String(secs).padStart(2,'0');
+}
+
+function updateElapsed(){
+  const now = new Date();
+  let diff = now - START_DATE;
+  if (diff < 0) diff = 0;
+
+  const days = Math.floor(diff / (1000*60*60*24));
+  const hours = Math.floor((diff / (1000*60*60)) % 24);
+  const mins = Math.floor((diff / (1000*60)) % 60);
+  const secs = Math.floor((diff / 1000) % 60);
+
+  document.getElementById('dT').textContent = days;
+  document.getElementById('hT').textContent = String(hours).padStart(2,'0');
+  document.getElementById('mT').textContent = String(mins).padStart(2,'0');
+  document.getElementById('sT').textContent = String(secs).padStart(2,'0');
+}
+
+function tickCountdowns(){
+  updateElapsed();
+  updateCountdown(target1y, '1');
+}
+tickCountdowns();
+setInterval(tickCountdowns, 1000);
+
+/* =========================================================
+   Schreibmaschinen-Effekt für den Brief
+   ========================================================= */
+const letterEl = document.getElementById('letter-text');
+const fullLetter = letterEl.getAttribute('data-full');
+let letterStarted = false;
+
+function typeLetter(){
+  if (letterStarted) return;
+  letterStarted = true;
+  letterEl.textContent = '';
+  let i = 0;
+  const speed = 22; // ms pro Zeichen
+  function step(){
+    if (i < fullLetter.length){
+      letterEl.textContent += fullLetter.charAt(i);
+      i++;
+      setTimeout(step, speed);
+    }
+  }
+  step();
+}
+
+const letterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting){
+      typeLetter();
+      letterObserver.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+letterObserver.observe(document.getElementById('brief'));
+
+/* =========================================================
+   "Nicht drücken" Button
+   ========================================================= */
+document.getElementById('secretBtn').addEventListener('click', () => {
+  confettiBurst(45);
+  document.getElementById('secretMessage').classList.add('show');
+});
+</script>
+
+</body>
+</html>
